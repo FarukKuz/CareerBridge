@@ -1,6 +1,69 @@
 # CareerBridge Teknik Dokümantasyon
 
+
 Bu doküman, CareerBridge projesinin geliştirme süreçlerinde uyulması gereken teknik standartları, dosya yapılarını ve kodlama kurallarını içerir. Tüm ekip üyelerinin bu standartlara uyması zorunludur.
+
+## 🚀 Hızlı Başlangıç: Git İş Akışı
+
+Projeye dahil olma ve geliştirme süreçleri için aşağıdaki Git komutlarını takip ediniz.
+
+### 1. Yeni Özellik Geliştirme (Feature Branch)
+
+1. **Projeyi klonlayın:**
+```bash
+git clone <repo_link>
+```
+
+2. **Proje dizinine girin:**
+```bash
+cd <repo_name>
+```
+
+3. **Yeni branch oluşturun** (Naming: `feature/özellik-adi`):
+```bash
+git checkout -b feature/gemini-api
+```
+
+4. **Geliştirmeleri yapın ve tüm dosyaları ekleyin:**
+```bash
+git add .
+```
+
+5. **Commit oluşturun** (Mesaj standardına uygun):
+```bash
+git commit -m "feat: add gemini api integration"
+```
+
+6. **Branch'i uzak sunucuya gönderin:**
+```bash
+git push origin feature/gemini-api
+```
+
+### 2. Pull Request (PR) Onaylandıktan Sonra
+
+1. **Main branch'e geçin:**
+```bash
+git checkout main
+```
+
+2. **Localdeki eski feature branch'i silin:**
+```bash
+git branch -d feature/gemini-api
+```
+
+### 3. Güncel Kodları Çekme ve Yeni İş
+
+1. **Main branch'i güncelleyin:**
+```bash
+git pull origin main
+```
+
+2. **Yeni özellik için branch açın:**
+```bash
+git checkout -b feature/yeni-ozellik
+```
+
+---
 
 ## İçindekiler
 - [1. Teknoloji Standartları](#1-teknoloji-standartları)
