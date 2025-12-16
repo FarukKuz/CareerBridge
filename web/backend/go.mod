@@ -1,1 +1,3 @@
-module ingestion-service
+module telemetry-system
+
+go 1.25.5
