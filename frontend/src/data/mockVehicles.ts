@@ -1,54 +1,44 @@
 import type { Vehicle } from "../types/vehicle";
 
-export const mockVehicles: Vehicle[] = [
-  {
-    id: "1",
-    plateNumber: "34 ABC 001",
-    lat: 41.0082,
-    lng: 28.9784,
-    speed: 45,
-    temperature: 22,
-    driverName: "Ahmet Yılmaz",
-    route: "Kadıköy - Taksim"
-  },
-  {
-    id: "2",
-    plateNumber: "34 ABC 002",
-    lat: 41.0422,
-    lng: 29.0083,
-    speed: 60,
-    temperature: 24,
-    driverName: "Mehmet Demir",
-    route: "Üsküdar - Beşiktaş"
-  },
-  {
-    id: "3",
-    plateNumber: "34 ABC 003",
-    lat: 40.9923,
-    lng: 28.8765,
-    speed: 38,
-    temperature: 28,
-    driverName: "Ali Kaya",
-    route: "Bakırköy - Eminönü"
-  },
-  {
-    id: "4",
-    plateNumber: "34 ABC 004",
-    lat: 41.0553,
-    lng: 28.9491,
-    speed: 52,
-    temperature: 23,
-    driverName: "Mustafa Öz",
-    route: "Mecidiyeköy - Şişli"
-  },
-  {
-    id: "5",
-    plateNumber: "34 ABC 005",
-    lat: 41.0136,
-    lng: 28.9550,
-    speed: 0,
-    temperature: 19,
-    driverName: "Hasan Çelik",
-    route: "Fatih - Aksaray"
+function generateVehicles(count: number): Vehicle[] {
+  const routes = [
+    "Kadıköy - Taksim",
+    "Üsküdar - Beşiktaş",
+    "Bakırköy - Eminönü",
+    "Mecidiyeköy - Şişli",
+    "Fatih - Aksaray",
+    "Pendik - Kartal",
+    "Beylikdüzü - Avcılar",
+    "Sarıyer - Maslak",
+    "Maltepe - Bostancı",
+    "Zeytinburnu - Topkapı"
+  ];
+
+  const drivers = [
+    "Ahmet Yılmaz", "Mehmet Demir", "Ali Kaya", "Mustafa Öz", 
+    "Hasan Çelik", "Hüseyin Ak", "İbrahim Koç", "Osman Yurt",
+    "Yusuf Aydın", "Emre Şahin", "Burak Kılıç", "Can Arslan"
+  ];
+
+  const vehicles: Vehicle[] = [];
+
+  for (let i = 1; i <= count; i++) {
+    const lat = 40.95 + Math.random() * 0.15;
+    const lng = 28.80 + Math.random() * 0.35;
+    
+    vehicles.push({
+      id: String(i),
+      plateNumber: `34 ABC ${String(i).padStart(3, "0")}`,
+      lat,
+      lng,
+      speed: Math.floor(Math.random() * 70),
+      temperature: 18 + Math.floor(Math.random() * 12),
+      driverName: drivers[Math.floor(Math.random() * drivers.length)],
+      route: routes[Math.floor(Math.random() * routes.length)]
+    });
   }
-];
+
+  return vehicles;
+}
+
+export const mockVehicles: Vehicle[] = generateVehicles(50);

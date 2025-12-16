@@ -1,0 +1,22 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+.custom-cluster-wrapper {
+  position: relative;
+}
+
+.custom-cluster-wrapper:hover .cluster-tooltip {
+  display: block !important;
+}
+
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
