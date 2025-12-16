@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-import { mockVehicles } from "../data/mockVehicles";
+import { mockVehicles, updateVehiclePositions } from "../data/mockVehicles";
 import type { Vehicle } from "../types/vehicle";
 
 declare module "leaflet" {
@@ -47,7 +47,73 @@ function createColoredIcon(isAlert: boolean): L.DivIcon {
 export default function MapView() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
+  const markerClusterRef = useRef<L.MarkerClusterGroup | null>(null);
+  const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
 
+  const createClusterIcon = useCallback((cluster: L.MarkerCluster) => {
+    const markers = cluster.getAllChildMarkers();
+    const total = markers.length;
+
+    let alertCount = 0;
+    let normalCount = 0;
+    
+    markers.forEach((marker) => {
+      const vehicle = marker.vehicleData;
+      if (vehicle && isVehicleAlert(vehicle)) {
+        alertCount++;
+      } else {
+        normalCount++;
+      }
+    });
+
+    let size = 40;
+    if (total > 10) size = 50;
+    if (total > 25) size = 60;
+
+    return L.divIcon({
+      html: `
+        <div class="custom-cluster" style="
+          width: ${size}px;
+          height: ${size}px;
+          background-color: #3b82f6;
+          border: 4px solid white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: 14px;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+          cursor: pointer;
+        ">
+          ${total}
+        </div>
+        <div class="cluster-tooltip" style="
+          display: none;
+          position: absolute;
+          bottom: ${size + 8}px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: white;
+          padding: 8px 12px;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+          white-space: nowrap;
+          font-size: 12px;
+          z-index: 1000;
+        ">
+          <span style="color: #22c55e;">● ${normalCount} Normal</span><br/>
+          <span style="color: #ef4444;">● ${alertCount} Uyarı</span>
+        </div>
+      `,
+      className: "custom-cluster-wrapper",
+      iconSize: L.point(size, size),
+      iconAnchor: L.point(size / 2, size / 2)
+    });
+  }, []);
+
+  // Harita başlatma
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
@@ -57,81 +123,35 @@ export default function MapView() {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map.current);
 
-    const markerCluster = L.markerClusterGroup({
+    markerClusterRef.current = L.markerClusterGroup({
       maxClusterRadius: 50,
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
-      iconCreateFunction: (cluster) => {
-        const markers = cluster.getAllChildMarkers();
-        const total = markers.length;
-
-        let alertCount = 0;
-        let normalCount = 0;
-        
-        markers.forEach((marker) => {
-          const vehicle = marker.vehicleData;
-          if (vehicle && isVehicleAlert(vehicle)) {
-            alertCount++;
-          } else {
-            normalCount++;
-          }
-        });
-
-
-        let size = 40;
-        if (total > 10) size = 50;
-        if (total > 25) size = 60;
-
-        return L.divIcon({
-          html: `
-            <div class="custom-cluster" style="
-              width: ${size}px;
-              height: ${size}px;
-              background-color: #3b82f6;
-              border: 4px solid white;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: white;
-              font-weight: bold;
-              font-size: 14px;
-              box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-              cursor: pointer;
-            ">
-              ${total}
-            </div>
-            <div class="cluster-tooltip" style="
-              display: none;
-              position: absolute;
-              bottom: ${size + 8}px;
-              left: 50%;
-              transform: translateX(-50%);
-              background: white;
-              padding: 8px 12px;
-              border-radius: 8px;
-              box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-              white-space: nowrap;
-              font-size: 12px;
-              z-index: 1000;
-            ">
-              <span style="color: #22c55e;">● ${normalCount} Normal</span><br/>
-              <span style="color: #ef4444;">● ${alertCount} Uyarı</span>
-            </div>
-          `,
-          className: "custom-cluster-wrapper",
-          iconSize: L.point(size, size),
-          iconAnchor: L.point(size / 2, size / 2)
-        });
-      }
+      iconCreateFunction: createClusterIcon
     });
 
-    mockVehicles.forEach((vehicle) => {
+    map.current.addLayer(markerClusterRef.current);
+
+    return () => {
+      map.current?.remove();
+      map.current = null;
+    };
+  }, [createClusterIcon]);
+
+  // Araçları haritaya ekle/güncelle
+  useEffect(() => {
+    if (!markerClusterRef.current) return;
+
+    // Mevcut markerları temizle
+    markerClusterRef.current.clearLayers();
+
+    // Yeni markerları ekle
+    vehicles.forEach((vehicle) => {
       const hasAlert = isVehicleAlert(vehicle);
       const icon = createColoredIcon(hasAlert);
       
       const marker = L.marker([vehicle.lat, vehicle.lng], { icon });
-      marker.vehicleData = vehicle; // Vehicle bilgisini marker'a ekle
+      marker.vehicleData = vehicle;
       
       const statusText = hasAlert ? "⚠️ UYARI" : "✅ Normal";
       marker.bindPopup(`
@@ -143,15 +163,17 @@ export default function MapView() {
         Sıcaklık: ${vehicle.temperature}°C ${vehicle.temperature > TEMP_LIMIT ? "⚠️" : ""}
       `);
 
-      markerCluster.addLayer(marker);
+      markerClusterRef.current!.addLayer(marker);
     });
+  }, [vehicles]);
 
-    map.current.addLayer(markerCluster);
+  // 1Hz canlı güncelleme simülasyonu
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVehicles(prev => updateVehiclePositions(prev));
+    }, 1000); // 1 saniyede bir güncelle
 
-    return () => {
-      map.current?.remove();
-      map.current = null;
-    };
+    return () => clearInterval(interval);
   }, []);
 
   return (
