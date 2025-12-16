@@ -3,6 +3,9 @@ import type { Vehicle } from "../types/vehicle";
 interface VehicleDetailPanelProps {
   vehicle: Vehicle | null;
   onClose: () => void;
+  onFocusVehicle?: () => void;
+  onFollowVehicle?: () => void;
+  isFollowing?: boolean;
   speedLimit: number;
   tempLimit: number;
 }
@@ -10,6 +13,9 @@ interface VehicleDetailPanelProps {
 export default function VehicleDetailPanel({ 
   vehicle, 
   onClose, 
+  onFocusVehicle,
+  onFollowVehicle,
+  isFollowing,
   speedLimit, 
   tempLimit 
 }: VehicleDetailPanelProps) {
@@ -21,15 +27,10 @@ export default function VehicleDetailPanel({
 
   return (
     <div style={{
-      position: "absolute",
-      top: "20px",
-      right: "20px",
-      width: "320px",
+      width: "100%",
+      height: "100%",
       backgroundColor: "white",
-      borderRadius: "12px",
-      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
-      zIndex: 1000,
-      overflow: "hidden"
+      overflow: "auto"
     }}>
       {/* Header */}
       <div style={{
@@ -38,7 +39,10 @@ export default function VehicleDetailPanel({
         padding: "16px",
         display: "flex",
         justifyContent: "space-between",
-        alignItems: "center"
+        alignItems: "center",
+        position: "sticky",
+        top: 0,
+        zIndex: 10
       }}>
         <div>
           <h3 style={{ margin: 0, fontSize: "18px" }}>{vehicle.plateNumber}</h3>
@@ -132,10 +136,60 @@ export default function VehicleDetailPanel({
           backgroundColor: "#f8fafc", 
           borderRadius: "8px",
           fontSize: "12px",
-          color: "#666"
+          color: "#666",
+          marginBottom: "16px"
         }}>
           <label style={{ display: "block", marginBottom: "4px" }}>Konum</label>
           <span>📍 {vehicle.lat.toFixed(5)}, {vehicle.lng.toFixed(5)}</span>
+        </div>
+
+        {/* Aksiyon Butonları */}
+        <div style={{ 
+          display: "flex", 
+          gap: "8px",
+          flexDirection: "column"
+        }}>
+          {/* Konuma Git Butonu */}
+          <button
+            onClick={onFocusVehicle}
+            style={{
+              padding: "12px 16px",
+              backgroundColor: "#3b82f6",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px"
+            }}
+          >
+            📍 Konuma Git
+          </button>
+
+          {/* Takip Et Butonu */}
+          <button
+            onClick={onFollowVehicle}
+            style={{
+              padding: "12px 16px",
+              backgroundColor: isFollowing ? "#8b5cf6" : "#f3f4f6",
+              color: isFollowing ? "white" : "#374151",
+              border: isFollowing ? "none" : "1px solid #d1d5db",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px"
+            }}
+          >
+            {isFollowing ? "🔴 Takibi Durdur" : "📡 Takip Et"}
+          </button>
         </div>
       </div>
     </div>

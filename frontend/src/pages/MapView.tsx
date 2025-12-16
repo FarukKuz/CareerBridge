@@ -53,7 +53,8 @@ export default function MapView() {
   const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
-  const [isFollowing, setIsFollowing] = useState<boolean>(false); // Takip modu
+  const [isFollowing, setIsFollowing] = useState<boolean>(false);
+  const [followingVehicleId, setFollowingVehicleId] = useState<string | null>(null);
 
   const createClusterIcon = useCallback((cluster: L.MarkerCluster) => {
     const markers = cluster.getAllChildMarkers();
@@ -151,9 +152,15 @@ export default function MapView() {
     return true;
   });
 
+  // Takip edilen araç
+  const followingVehicle = followingVehicleId 
+    ? vehicles.find(v => v.id === followingVehicleId) 
+    : null;
 
-  const vehiclesToShow = selectedVehicle 
-    ? filteredVehicles.filter(v => v.id === selectedVehicle.id)
+
+  const focusedVehicleId = selectedVehicle?.id || followingVehicleId;
+  const vehiclesToShow = focusedVehicleId 
+    ? filteredVehicles.filter(v => v.id === focusedVehicleId)
     : filteredVehicles;
 
  
@@ -194,17 +201,18 @@ export default function MapView() {
 
 
   useEffect(() => {
-    if (isFollowing && currentSelectedVehicle && map.current) {
-      map.current.panTo([currentSelectedVehicle.lat, currentSelectedVehicle.lng], {
+    if (isFollowing && followingVehicle && map.current) {
+      map.current.panTo([followingVehicle.lat, followingVehicle.lng], {
         animate: false
       });
     }
-  }, [isFollowing, currentSelectedVehicle]);
+  }, [isFollowing, followingVehicle]);
 
 
   const handleSelectVehicle = (vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
     setIsFollowing(false);
+    setFollowingVehicleId(null);
     if (map.current) {
       map.current.setView([vehicle.lat, vehicle.lng], 18);
     }
@@ -212,60 +220,112 @@ export default function MapView() {
 
 
   const handleDoubleClickVehicle = (vehicle: Vehicle) => {
-    setSelectedVehicle(vehicle);
     setIsFollowing(true);
+    setFollowingVehicleId(vehicle.id);
+    setSelectedVehicle(null); // Panel kapansın, floating buton göstersin
     if (map.current) {
       map.current.setView([vehicle.lat, vehicle.lng], 18);
     }
   };
 
-  return (
-    <div style={{
-      display: "flex",
-      gap: "16px",
-      height: "100vh",
-      width: "100%",
-      padding: "16px",
-      boxSizing: "border-box",
-      backgroundColor: "#f5f5f5"
-    }}>
-      {/* Sol Sidebar */}
-      <VehicleSidebar
-        vehicles={vehicles}
-        selectedVehicle={selectedVehicle}
-        onSelectVehicle={handleSelectVehicle}
-        onDoubleClickVehicle={handleDoubleClickVehicle}
-        isFollowing={isFollowing}
-        filter={filter}
-        onFilterChange={setFilter}
-        speedLimit={SPEED_LIMIT}
-        tempLimit={TEMP_LIMIT}
-      />
 
-      {/* Harita Container */}
-      <div style={{ 
-        flex: 1, 
-        position: "relative",
-        height: "100%"
-      }}>
-        <div 
-          ref={mapContainer} 
-          style={{ 
-            height: "100%", 
-            width: "100%",
-            borderRadius: "16px",
-            overflow: "hidden",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)"
-          }} 
-        />
-        
-        {/* Araç Detay Paneli */}
-        <VehicleDetailPanel
-          vehicle={currentSelectedVehicle}
-          onClose={() => setSelectedVehicle(null)}
+  const handleFocusVehicle = () => {
+    if (currentSelectedVehicle && map.current) {
+      map.current.setView([currentSelectedVehicle.lat, currentSelectedVehicle.lng], 18);
+    }
+  };
+
+
+  const handleToggleFollow = () => {
+    if (isFollowing) {
+
+      setIsFollowing(false);
+      setFollowingVehicleId(null);
+    } 
+	else 
+	{
+      if (currentSelectedVehicle) {
+        setIsFollowing(true);
+        setFollowingVehicleId(currentSelectedVehicle.id);
+        setSelectedVehicle(null);
+        if (map.current) {
+          map.current.setView([currentSelectedVehicle.lat, currentSelectedVehicle.lng], 18);
+        }
+      }
+    }
+  };
+
+  const handleStopFollowing = () => {
+    setIsFollowing(false);
+    setFollowingVehicleId(null);
+  };
+
+  return (
+    <div className="main-container">
+      {/* Sol Sidebar */}
+      <div className="sidebar">
+        <VehicleSidebar
+          vehicles={vehicles}
+          selectedVehicle={selectedVehicle}
+          onSelectVehicle={handleSelectVehicle}
+          onDoubleClickVehicle={handleDoubleClickVehicle}
+          isFollowing={isFollowing}
+          followingVehicleId={followingVehicleId}
+          filter={filter}
+          onFilterChange={setFilter}
           speedLimit={SPEED_LIMIT}
           tempLimit={TEMP_LIMIT}
         />
+      </div>
+
+      {/* Harita Container */}
+      <div className="map-container">
+        <div 
+          ref={mapContainer} 
+          className="map-wrapper"
+        />
+        
+        {/* Araç Detay Paneli */}
+        {currentSelectedVehicle && (
+          <div className="detail-panel">
+            <VehicleDetailPanel
+              vehicle={currentSelectedVehicle}
+              onClose={() => {
+                setSelectedVehicle(null);
+                if (!isFollowing) {
+                  setFollowingVehicleId(null);
+                }
+              }}
+              onFocusVehicle={handleFocusVehicle}
+              onFollowVehicle={handleToggleFollow}
+              isFollowing={isFollowing}
+              speedLimit={SPEED_LIMIT}
+              tempLimit={TEMP_LIMIT}
+            />
+          </div>
+        )}
+
+        {/* Takip Modu Floating Butonu - Panel kapalıyken göster */}
+        {isFollowing && followingVehicle && !currentSelectedVehicle && (
+          <div className="follow-mode-overlay">
+            <div className="follow-mode-info">
+              <button 
+                className="follow-mode-vehicle"
+                onClick={() => setSelectedVehicle(followingVehicle)}
+                title="Detayları göster"
+              >
+                🚌 {followingVehicle.plateNumber}
+              </button>
+              <span className="follow-mode-status">takip ediliyor</span>
+              <button 
+                className="follow-mode-stop-btn"
+                onClick={handleStopFollowing}
+              >
+                Durdur
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

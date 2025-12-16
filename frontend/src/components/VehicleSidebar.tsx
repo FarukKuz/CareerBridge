@@ -8,6 +8,7 @@ interface VehicleSidebarProps {
   onSelectVehicle: (vehicle: Vehicle) => void;
   onDoubleClickVehicle?: (vehicle: Vehicle) => void;
   isFollowing?: boolean;
+  followingVehicleId?: string | null;
   filter: FilterType;
   onFilterChange: (filter: FilterType) => void;
   speedLimit: number;
@@ -24,6 +25,7 @@ export default function VehicleSidebar({
   onSelectVehicle,
   onDoubleClickVehicle,
   isFollowing,
+  followingVehicleId,
   filter,
   onFilterChange,
   speedLimit,
@@ -43,7 +45,7 @@ export default function VehicleSidebar({
 
   return (
     <div style={{
-      width: "280px",
+      width: "100%",
       height: "100%",
       backgroundColor: "white",
       borderRadius: "12px",
@@ -54,7 +56,7 @@ export default function VehicleSidebar({
     }}>
       {/* Header */}
       <div style={{
-        padding: "16px",
+        padding: "12px 16px",
         borderBottom: "1px solid #e5e7eb",
         backgroundColor: "#f9fafb"
       }}>
@@ -109,7 +111,7 @@ export default function VehicleSidebar({
         {filteredVehicles.map(vehicle => {
           const hasAlert = isVehicleAlert(vehicle, speedLimit, tempLimit);
           const isSelected = selectedVehicle?.id === vehicle.id;
-          const isBeingFollowed = isSelected && isFollowing;
+          const isBeingFollowed = isFollowing && followingVehicleId === vehicle.id;
 
           return (
             <div
