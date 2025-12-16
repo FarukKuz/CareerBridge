@@ -6,7 +6,7 @@
 /*   By: fakuz <fakuz@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/12/16 21:56:23 by fakuz             #+#    #+#             */
-/*   Updated: 2025/12/16 22:03:23 by fakuz            ###   ########.fr       */
+/*   Updated: 2025/12/17 00:10:06 by fakuz            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 )
 
 func ParseTelemetryData(rawData []byte) (*TelemetryData, error) {
