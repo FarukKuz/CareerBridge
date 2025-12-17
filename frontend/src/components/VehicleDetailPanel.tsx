@@ -23,7 +23,8 @@ export default function VehicleDetailPanel({
 
   const isSpeedAlert = vehicle.speed > speedLimit;
   const isTempAlert = vehicle.temperature > tempLimit;
-  const hasAlert = isSpeedAlert || isTempAlert;
+  const isGeofenceAlert = vehicle.isOutOfBounds === true;
+  const hasAlert = isSpeedAlert || isTempAlert || isGeofenceAlert;
 
   return (
     <div style={{
@@ -137,10 +138,35 @@ export default function VehicleDetailPanel({
           borderRadius: "8px",
           fontSize: "12px",
           color: "#666",
-          marginBottom: "16px"
+          marginBottom: "12px"
         }}>
           <label style={{ display: "block", marginBottom: "4px" }}>Konum</label>
           <span>📍 {vehicle.lat.toFixed(5)}, {vehicle.lng.toFixed(5)}</span>
+        </div>
+
+        {/* Geofence Durumu */}
+        <div style={{ 
+          padding: "12px", 
+          backgroundColor: vehicle.isOutOfBounds ? "#fef2f2" : "#f0fdf4", 
+          borderRadius: "8px",
+          fontSize: "12px",
+          border: `1px solid ${vehicle.isOutOfBounds ? "#fecaca" : "#bbf7d0"}`,
+          marginBottom: "16px"
+        }}>
+          <label style={{ display: "block", marginBottom: "4px", color: "#666" }}>Bölge Durumu</label>
+          <div style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "6px",
+            color: vehicle.isOutOfBounds ? "#ef4444" : "#22c55e",
+            fontWeight: 500
+          }}>
+            {vehicle.isOutOfBounds ? (
+              <>⚠️ Bölge Dışında ({vehicle.geofence.radius}m sınır)</>
+            ) : (
+              <>✅ Bölge İçinde ({vehicle.geofence.radius}m sınır)</>
+            )}
+          </div>
         </div>
 
         {/* Aksiyon Butonları */}

@@ -16,7 +16,9 @@ interface VehicleSidebarProps {
 }
 
 function isVehicleAlert(vehicle: Vehicle, speedLimit: number, tempLimit: number): boolean {
-  return vehicle.speed > speedLimit || vehicle.temperature > tempLimit;
+  return vehicle.speed > speedLimit || 
+         vehicle.temperature > tempLimit || 
+         vehicle.isOutOfBounds === true;
 }
 
 export default function VehicleSidebar({

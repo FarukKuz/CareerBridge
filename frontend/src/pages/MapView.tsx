@@ -22,7 +22,9 @@ const SPEED_LIMIT = 50;
 const TEMP_LIMIT = 25;
 
 function isVehicleAlert(vehicle: Vehicle): boolean {
-  return vehicle.speed > SPEED_LIMIT || vehicle.temperature > TEMP_LIMIT;
+  return vehicle.speed > SPEED_LIMIT || 
+         vehicle.temperature > TEMP_LIMIT || 
+         vehicle.isOutOfBounds === true;
 }
 
 function createColoredIcon(isAlert: boolean): L.DivIcon {
@@ -50,6 +52,7 @@ export default function MapView() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const markerClusterRef = useRef<L.MarkerClusterGroup | null>(null);
+  const geofenceCircleRef = useRef<L.Circle | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
@@ -152,7 +155,6 @@ export default function MapView() {
     return true;
   });
 
-  // Takip edilen araç
   const followingVehicle = followingVehicleId 
     ? vehicles.find(v => v.id === followingVehicleId) 
     : null;
@@ -199,6 +201,33 @@ export default function MapView() {
     ? vehicles.find(v => v.id === selectedVehicle.id) || null
     : null;
 
+  const activeVehicle = currentSelectedVehicle || followingVehicle;
+
+  useEffect(() => {
+    if (!map.current) return;
+
+    if (geofenceCircleRef.current) {
+      geofenceCircleRef.current.remove();
+      geofenceCircleRef.current = null;
+    }
+
+    if (activeVehicle) {
+      const isOutside = activeVehicle.isOutOfBounds;
+      
+      geofenceCircleRef.current = L.circle(
+        [activeVehicle.geofence.centerLat, activeVehicle.geofence.centerLng],
+        {
+          radius: activeVehicle.geofence.radius,
+          color: isOutside ? '#ef4444' : '#3b82f6',
+          fillColor: isOutside ? '#ef4444' : '#3b82f6',
+          fillOpacity: 0.1,
+          weight: 2,
+          dashArray: isOutside ? '5, 5' : undefined
+        }
+      ).addTo(map.current);
+    }
+  }, [activeVehicle]);
+
 
   useEffect(() => {
     if (isFollowing && followingVehicle && map.current) {
@@ -222,7 +251,7 @@ export default function MapView() {
   const handleDoubleClickVehicle = (vehicle: Vehicle) => {
     setIsFollowing(true);
     setFollowingVehicleId(vehicle.id);
-    setSelectedVehicle(null); // Panel kapansın, floating buton göstersin
+    setSelectedVehicle(null);
     if (map.current) {
       map.current.setView([vehicle.lat, vehicle.lng], 18);
     }
