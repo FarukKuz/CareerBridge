@@ -1,2 +1,2 @@
 .DS_Store
-data/postgres_data/pg_stat_tmp/*.pg_stat_tmp
+data/postgres_data/pg_stat_tmp/*.stat
