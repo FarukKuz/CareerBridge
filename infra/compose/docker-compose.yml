@@ -5,7 +5,7 @@ services:
       - "8080:443"
       - "8081:80"
     volumes:
-      - ../../web/public:/usr/share/nginx/html
+      - ../../web/frontend:/usr/share/nginx/html
       - ../nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       - ../ssl/nginx-selfsigned.crt:/etc/nginx/ssl/nginx-selfsigned.crt:ro
       - ../ssl/nginx-selfsigned.key:/etc/nginx/ssl/nginx-selfsigned.key:ro
@@ -50,7 +50,7 @@ services:
 
   processor-service:
     build:
-      context: ../../services/processor
+      context: ../../web/backend/services/processor-service
     container_name: iot_processor
     restart: on-failure
     depends_on:
@@ -69,7 +69,7 @@ services:
 
   ingestion-service:
     build:
-      context: ../../services/ingestion
+      context: ../../web/backend/services/ingestion-service
     container_name: iot_ingestion
     restart: on-failure
     depends_on:
