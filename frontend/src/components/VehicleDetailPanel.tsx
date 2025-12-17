@@ -27,141 +27,77 @@ export default function VehicleDetailPanel({
   const hasAlert = isSpeedAlert || isTempAlert || isGeofenceAlert;
 
   return (
-    <div style={{
-      width: "100%",
-      height: "100%",
-      backgroundColor: "white",
-      overflow: "auto"
-    }}>
+    <article 
+      className="panel-container"
+      role="dialog"
+      aria-label={`${vehicle.plateNumber} araç detayları`}
+      aria-modal="false"
+    >
       {/* Header */}
-      <div style={{
-        backgroundColor: hasAlert ? "#ef4444" : "#22c55e",
-        color: "white",
-        padding: "16px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        position: "sticky",
-        top: 0,
-        zIndex: 10
-      }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: "18px" }}>{vehicle.plateNumber}</h3>
-          <span style={{ fontSize: "12px", opacity: 0.9 }}>
+      <header className={`panel-header ${hasAlert ? "alert" : "normal"}`}>
+        <div className="panel-header-title">
+          <h3>{vehicle.plateNumber}</h3>
+          <span role="status" aria-live="polite">
             {hasAlert ? "⚠️ Uyarı Durumunda" : "✅ Normal"}
           </span>
         </div>
-        <button
+        <button 
+          className="panel-close-btn" 
           onClick={onClose}
-          style={{
-            background: "rgba(255,255,255,0.2)",
-            border: "none",
-            color: "white",
-            width: "32px",
-            height: "32px",
-            borderRadius: "50%",
-            cursor: "pointer",
-            fontSize: "18px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}
+          aria-label="Paneli kapat"
         >
           ✕
         </button>
-      </div>
+      </header>
 
       {/* Content */}
-      <div style={{ padding: "16px" }}>
+      <div className="panel-content">
         {/* Sürücü Bilgisi */}
-        <div style={{ marginBottom: "16px" }}>
-          <label style={{ fontSize: "12px", color: "#666", display: "block" }}>Sürücü</label>
-          <span style={{ fontSize: "16px", fontWeight: 500 }}>{vehicle.driverName}</span>
+        <div className="panel-field">
+          <label>Sürücü</label>
+          <span className="panel-field-value">{vehicle.driverName}</span>
         </div>
 
         {/* Güzergah */}
-        <div style={{ marginBottom: "16px" }}>
-          <label style={{ fontSize: "12px", color: "#666", display: "block" }}>Güzergah</label>
-          <span style={{ fontSize: "16px", fontWeight: 500 }}>{vehicle.route}</span>
+        <div className="panel-field">
+          <label>Güzergah</label>
+          <span className="panel-field-value">{vehicle.route}</span>
         </div>
 
         {/* Hız ve Sıcaklık Grid */}
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "1fr 1fr", 
-          gap: "12px",
-          marginBottom: "16px"
-        }}>
+        <div className="panel-metrics">
           {/* Hız */}
-          <div style={{
-            padding: "12px",
-            backgroundColor: isSpeedAlert ? "#fef2f2" : "#f0fdf4",
-            borderRadius: "8px",
-            border: `1px solid ${isSpeedAlert ? "#fecaca" : "#bbf7d0"}`
-          }}>
-            <label style={{ fontSize: "11px", color: "#666", display: "block" }}>Hız</label>
-            <span style={{ 
-              fontSize: "24px", 
-              fontWeight: "bold",
-              color: isSpeedAlert ? "#ef4444" : "#22c55e"
-            }}>
+          <div className={`panel-metric ${isSpeedAlert ? "alert" : "normal"}`}>
+            <label>Hız</label>
+            <span className={`panel-metric-value ${isSpeedAlert ? "alert" : "normal"}`}>
               {vehicle.speed}
             </span>
-            <span style={{ fontSize: "12px", color: "#666" }}> km/h</span>
-            {isSpeedAlert && <span style={{ marginLeft: "4px" }}>⚠️</span>}
+            <span className="panel-metric-unit"> km/h</span>
+            {isSpeedAlert && <span> ⚠️</span>}
           </div>
 
           {/* Sıcaklık */}
-          <div style={{
-            padding: "12px",
-            backgroundColor: isTempAlert ? "#fef2f2" : "#f0fdf4",
-            borderRadius: "8px",
-            border: `1px solid ${isTempAlert ? "#fecaca" : "#bbf7d0"}`
-          }}>
-            <label style={{ fontSize: "11px", color: "#666", display: "block" }}>Sıcaklık</label>
-            <span style={{ 
-              fontSize: "24px", 
-              fontWeight: "bold",
-              color: isTempAlert ? "#ef4444" : "#22c55e"
-            }}>
+          <div className={`panel-metric ${isTempAlert ? "alert" : "normal"}`}>
+            <label>Sıcaklık</label>
+            <span className={`panel-metric-value ${isTempAlert ? "alert" : "normal"}`}>
               {vehicle.temperature}
             </span>
-            <span style={{ fontSize: "12px", color: "#666" }}>°C</span>
-            {isTempAlert && <span style={{ marginLeft: "4px" }}>⚠️</span>}
+            <span className="panel-metric-unit">°C</span>
+            {isTempAlert && <span> ⚠️</span>}
           </div>
         </div>
 
         {/* Konum */}
-        <div style={{ 
-          padding: "12px", 
-          backgroundColor: "#f8fafc", 
-          borderRadius: "8px",
-          fontSize: "12px",
-          color: "#666",
-          marginBottom: "12px"
-        }}>
-          <label style={{ display: "block", marginBottom: "4px" }}>Konum</label>
+        <div className="panel-info-box location">
+          <label>Konum</label>
           <span>📍 {vehicle.lat.toFixed(5)}, {vehicle.lng.toFixed(5)}</span>
         </div>
 
         {/* Geofence Durumu */}
-        <div style={{ 
-          padding: "12px", 
-          backgroundColor: vehicle.isOutOfBounds ? "#fef2f2" : "#f0fdf4", 
-          borderRadius: "8px",
-          fontSize: "12px",
-          border: `1px solid ${vehicle.isOutOfBounds ? "#fecaca" : "#bbf7d0"}`,
-          marginBottom: "16px"
-        }}>
-          <label style={{ display: "block", marginBottom: "4px", color: "#666" }}>Bölge Durumu</label>
-          <div style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            gap: "6px",
-            color: vehicle.isOutOfBounds ? "#ef4444" : "#22c55e",
-            fontWeight: 500
-          }}>
-            {vehicle.isOutOfBounds ? (
+        <div className={`panel-info-box geofence ${isGeofenceAlert ? "alert" : "normal"}`}>
+          <label>Bölge Durumu</label>
+          <div>
+            {isGeofenceAlert ? (
               <>⚠️ Bölge Dışında ({vehicle.geofence.radius}m sınır)</>
             ) : (
               <>✅ Bölge İçinde ({vehicle.geofence.radius}m sınır)</>
@@ -170,54 +106,24 @@ export default function VehicleDetailPanel({
         </div>
 
         {/* Aksiyon Butonları */}
-        <div style={{ 
-          display: "flex", 
-          gap: "8px",
-          flexDirection: "column"
-        }}>
-          {/* Konuma Git Butonu */}
-          <button
+        <div className="panel-actions" role="group" aria-label="Araç işlemleri">
+          <button 
+            className="panel-btn primary" 
             onClick={onFocusVehicle}
-            style={{
-              padding: "12px 16px",
-              backgroundColor: "#3b82f6",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px"
-            }}
+            aria-label={`${vehicle.plateNumber} konumuna git`}
           >
             📍 Konuma Git
           </button>
-
-          {/* Takip Et Butonu */}
-          <button
+          <button 
+            className={`panel-btn ${isFollowing ? "stop" : "follow"}`}
             onClick={onFollowVehicle}
-            style={{
-              padding: "12px 16px",
-              backgroundColor: isFollowing ? "#8b5cf6" : "#f3f4f6",
-              color: isFollowing ? "white" : "#374151",
-              border: isFollowing ? "none" : "1px solid #d1d5db",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "8px"
-            }}
+            aria-pressed={isFollowing}
+            aria-label={isFollowing ? `${vehicle.plateNumber} takibini durdur` : `${vehicle.plateNumber} aracını takip et`}
           >
             {isFollowing ? "🔴 Takibi Durdur" : "📡 Takip Et"}
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

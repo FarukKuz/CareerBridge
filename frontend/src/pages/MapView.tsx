@@ -336,19 +336,20 @@ export default function MapView() {
 
         {/* Takip Modu Floating Butonu - Panel kapalıyken göster */}
         {isFollowing && followingVehicle && !currentSelectedVehicle && (
-          <div className="follow-mode-overlay">
+          <div className="follow-mode-overlay" role="status" aria-live="polite">
             <div className="follow-mode-info">
               <button 
                 className="follow-mode-vehicle"
                 onClick={() => setSelectedVehicle(followingVehicle)}
-                title="Detayları göster"
+                aria-label={`${followingVehicle.plateNumber} detaylarını göster`}
               >
                 🚌 {followingVehicle.plateNumber}
               </button>
-              <span className="follow-mode-status">takip ediliyor</span>
+              <span className="follow-mode-status" aria-hidden="true">takip ediliyor</span>
               <button 
                 className="follow-mode-stop-btn"
                 onClick={handleStopFollowing}
+                aria-label="Araç takibini durdur"
               >
                 Durdur
               </button>
