@@ -4,10 +4,11 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-import { mockVehicles, updateVehiclePositions } from "../data/mockVehicles";
+
 import type { Vehicle } from "../types/vehicle";
 import VehicleDetailPanel from "../components/VehicleDetailPanel";
 import VehicleSidebar, { type FilterType } from "../components/VehicleSidebar";
+import PulseChat from "../components/PulseChat";
 
 declare module "leaflet" {
   interface Marker {
@@ -18,18 +19,19 @@ declare module "leaflet" {
 const ISTANBUL_CENTER: L.LatLngExpression = [41.0082, 28.9784];
 const DEFAULT_ZOOM = 12;
 
-const SPEED_LIMIT = 50;
-const TEMP_LIMIT = 25;
+// Load limits from localStorage or defaults
+const SPEED_LIMIT = Number(localStorage.getItem("SPEED_LIMIT")) || 50;
+const TEMP_LIMIT = Number(localStorage.getItem("TEMP_LIMIT")) || 25;
 
 function isVehicleAlert(vehicle: Vehicle): boolean {
-  return vehicle.speed > SPEED_LIMIT || 
-         vehicle.temperature > TEMP_LIMIT || 
-         vehicle.isOutOfBounds === true;
+  return vehicle.speed > SPEED_LIMIT ||
+    vehicle.temperature > TEMP_LIMIT ||
+    vehicle.isOutOfBounds === true;
 }
 
 function createColoredIcon(isAlert: boolean): L.DivIcon {
   const color = isAlert ? "#ef4444" : "#22c55e";
-  
+
   return L.divIcon({
     className: "custom-marker",
     html: `
@@ -53,7 +55,7 @@ export default function MapView() {
   const map = useRef<L.Map | null>(null);
   const markerClusterRef = useRef<L.MarkerClusterGroup | null>(null);
   const geofenceCircleRef = useRef<L.Circle | null>(null);
-  const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
@@ -65,7 +67,7 @@ export default function MapView() {
 
     let alertCount = 0;
     let normalCount = 0;
-    
+
     markers.forEach((marker) => {
       const vehicle = marker.vehicleData;
       if (vehicle && isVehicleAlert(vehicle)) {
@@ -155,17 +157,17 @@ export default function MapView() {
     return true;
   });
 
-  const followingVehicle = followingVehicleId 
-    ? vehicles.find(v => v.id === followingVehicleId) 
+  const followingVehicle = followingVehicleId
+    ? vehicles.find(v => v.id === followingVehicleId)
     : null;
 
 
   const focusedVehicleId = selectedVehicle?.id || followingVehicleId;
-  const vehiclesToShow = focusedVehicleId 
+  const vehiclesToShow = focusedVehicleId
     ? filteredVehicles.filter(v => v.id === focusedVehicleId)
     : filteredVehicles;
 
- 
+
   useEffect(() => {
     if (!markerClusterRef.current) return;
 
@@ -175,10 +177,10 @@ export default function MapView() {
     vehiclesToShow.forEach((vehicle) => {
       const hasAlert = isVehicleAlert(vehicle);
       const icon = createColoredIcon(hasAlert);
-      
+
       const marker = L.marker([vehicle.lat, vehicle.lng], { icon });
       marker.vehicleData = vehicle;
-      
+
       marker.on("click", () => {
         setSelectedVehicle(vehicle);
       });
@@ -189,15 +191,79 @@ export default function MapView() {
 
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVehicles(prev => updateVehiclePositions(prev));
-    }, 1000);
+    // WebSocket Bağlantısı
+    const ws = new WebSocket("ws://localhost:8080/ws");
 
-    return () => clearInterval(interval);
+    ws.onopen = () => {
+      console.log("Connected to Telemetry WebSocket");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        // Payload, Ingestion servisinden gelen TelemetryPacket yapısında olmalı
+        // JSON: { vehicle_id, speed, latitude, longitude, temp, ... }
+
+        setVehicles(prevVehicles => {
+          const vehicleIndex = prevVehicles.findIndex(v => v.id === payload.vehicle_id);
+
+          if (vehicleIndex === -1) {
+            // Yeni araç ekle
+            const newVehicle: Vehicle = {
+              id: payload.vehicle_id,
+              plateNumber: payload.vehicle_id, // Default to ID
+              lat: payload.latitude,
+              lng: payload.longitude,
+              speed: payload.speed,
+              temperature: payload.temperature,
+              driverName: "Simulated Driver",
+              route: "Istanbul Route",
+              name: `Vehicle ${payload.vehicle_id}`,
+              status: "active",
+              lastUpdate: new Date().toISOString(),
+              isOutOfBounds: false,
+              driver: {
+                name: "Simulated Driver",
+                status: "active"
+              },
+              geofence: { // Default geofence logic needed for UI
+                centerLat: 41.0082,
+                centerLng: 28.9784,
+                radius: 5000
+              }
+            };
+            return [...prevVehicles, newVehicle];
+          }
+
+          // Mevcut aracı güncelle
+          const updatedVehicles = [...prevVehicles];
+          updatedVehicles[vehicleIndex] = {
+            ...updatedVehicles[vehicleIndex],
+            lat: payload.latitude,
+            lng: payload.longitude,
+            speed: payload.speed,
+            temperature: payload.temperature,
+            lastUpdate: new Date().toISOString()
+          };
+          return updatedVehicles;
+        });
+
+      } catch (err) {
+        console.error("WS Parse Error:", err);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("Telemetry WebSocket Disconnected");
+    };
+
+    return () => {
+      ws.close();
+    };
   }, []);
 
 
-  const currentSelectedVehicle = selectedVehicle 
+  const currentSelectedVehicle = selectedVehicle
     ? vehicles.find(v => v.id === selectedVehicle.id) || null
     : null;
 
@@ -211,9 +277,9 @@ export default function MapView() {
       geofenceCircleRef.current = null;
     }
 
-    if (activeVehicle) {
+    if (activeVehicle && activeVehicle.geofence) {
       const isOutside = activeVehicle.isOutOfBounds;
-      
+
       geofenceCircleRef.current = L.circle(
         [activeVehicle.geofence.centerLat, activeVehicle.geofence.centerLng],
         {
@@ -258,31 +324,7 @@ export default function MapView() {
   };
 
 
-  const handleFocusVehicle = () => {
-    if (currentSelectedVehicle && map.current) {
-      map.current.setView([currentSelectedVehicle.lat, currentSelectedVehicle.lng], 18);
-    }
-  };
 
-
-  const handleToggleFollow = () => {
-    if (isFollowing) {
-
-      setIsFollowing(false);
-      setFollowingVehicleId(null);
-    } 
-	else 
-	{
-      if (currentSelectedVehicle) {
-        setIsFollowing(true);
-        setFollowingVehicleId(currentSelectedVehicle.id);
-        setSelectedVehicle(null);
-        if (map.current) {
-          map.current.setView([currentSelectedVehicle.lat, currentSelectedVehicle.lng], 18);
-        }
-      }
-    }
-  };
 
   const handleStopFollowing = () => {
     setIsFollowing(false);
@@ -309,36 +351,36 @@ export default function MapView() {
 
       {/* Harita Container */}
       <div className="map-container">
-        <div 
-          ref={mapContainer} 
+        <div
+          ref={mapContainer}
           className="map-wrapper"
         />
-        
+
         {/* Araç Detay Paneli */}
         {currentSelectedVehicle && (
           <div className="detail-panel">
-            <VehicleDetailPanel
-              vehicle={currentSelectedVehicle}
-              onClose={() => {
-                setSelectedVehicle(null);
-                if (!isFollowing) {
-                  setFollowingVehicleId(null);
-                }
-              }}
-              onFocusVehicle={handleFocusVehicle}
-              onFollowVehicle={handleToggleFollow}
-              isFollowing={isFollowing}
-              speedLimit={SPEED_LIMIT}
-              tempLimit={TEMP_LIMIT}
-            />
-          </div>
+            {selectedVehicle && (
+              <VehicleDetailPanel
+                vehicle={currentSelectedVehicle}
+                onClose={() => setSelectedVehicle(null)}
+                onFocusVehicle={() => {
+                  if (activeVehicle && map.current) {
+                    map.current.setView([activeVehicle.lat, activeVehicle.lng], 15);
+                  }
+                }}
+                onFollowVehicle={() => setIsFollowing(!isFollowing)}
+                isFollowing={isFollowing}
+                speedLimit={SPEED_LIMIT}
+                tempLimit={TEMP_LIMIT}
+              />
+            )}    </div>
         )}
 
         {/* Takip Modu Floating Butonu - Panel kapalıyken göster */}
         {isFollowing && followingVehicle && !currentSelectedVehicle && (
           <div className="follow-mode-overlay">
             <div className="follow-mode-info">
-              <button 
+              <button
                 className="follow-mode-vehicle"
                 onClick={() => setSelectedVehicle(followingVehicle)}
                 title="Detayları göster"
@@ -346,7 +388,7 @@ export default function MapView() {
                 🚌 {followingVehicle.plateNumber}
               </button>
               <span className="follow-mode-status">takip ediliyor</span>
-              <button 
+              <button
                 className="follow-mode-stop-btn"
                 onClick={handleStopFollowing}
               >
@@ -356,6 +398,9 @@ export default function MapView() {
           </div>
         )}
       </div>
+
+      {/* Pulse Chat */}
+      <PulseChat />
     </div>
   );
 }

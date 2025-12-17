@@ -13,6 +13,15 @@ export interface Vehicle {
   temperature: number;
   driverName: string;
   route: string;
-  geofence: Geofence;
+  geofence?: Geofence; // Make optional
   isOutOfBounds?: boolean;
+
+  // New fields used in MapView
+  name?: string;
+  status?: string;
+  lastUpdate?: string;
+  driver?: {
+    name: string;
+    status: string;
+  };
 }

@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FarukKuz/CareerBridge/services/ingestion/pkg/dto"
+	"github.com/FarukKuz/CareerBridge/web/backend/services/ingestion-service/pkg/dto"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -51,7 +51,8 @@ func (p *Publisher) Publish(ctx context.Context, packet *dto.TelemetryPacket) er
 	}).Err()
 
 	if err == nil {
-		// Başarılıysa çık
+		// Başarılıysa ayrıca CANLI İZLEME için PubSub yap
+		p.RedisClient.Publish(context.Background(), "telemetry_live", payload)
 		return nil
 	}
 

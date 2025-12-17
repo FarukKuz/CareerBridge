@@ -1,23 +1,18 @@
-# 1. Build Aşaması
-FROM golang:1.25.5-alpine AS builder
-
+# Build Stage
+FROM golang:1.24-alpine AS builder
+ARG CACHEBUST=1
 WORKDIR /app
 
-# ... önceki adımlar
-
-COPY go.mod go.sum ./
-RUN go mod download
-# Yeni: Bağımlılıkları düzenlemek ve senkronize etmek için 'tidy' eklemek faydalı olabilir
-RUN go mod tidy
 COPY . .
-RUN go build -o ingestion-service ./cmd/main.go
+RUN go mod tidy
 
-# ...
+RUN go build -o ingestion-service ./web/backend/services/ingestion-service/cmd/main.go
 
-# 2. Run Aşaması
+# Run Stage
 FROM alpine:latest
-
-WORKDIR /root/
+WORKDIR /app
 COPY --from=builder /app/ingestion-service .
+RUN touch offline_data.log
 
+EXPOSE 8080
 CMD ["./ingestion-service"]

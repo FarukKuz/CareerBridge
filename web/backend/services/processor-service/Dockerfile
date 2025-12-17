@@ -1,20 +1,16 @@
-# Build aşaması
-FROM golang:1.25.5-alpine AS builder
-
+# Build Stage
+FROM golang:1.24-alpine AS builder
+ARG CACHEBUST=1
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download
-
 COPY . .
+RUN go mod tidy
 
-RUN go build -o processor-service .
+RUN go build -o processor-service ./web/backend/services/processor-service/main.go
 
-# Çalışma aşaması
+# Run Stage
 FROM alpine:latest
-
-WORKDIR /root/
-
+WORKDIR /app
 COPY --from=builder /app/processor-service .
 
 CMD ["./processor-service"]

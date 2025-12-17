@@ -10,14 +10,14 @@ interface VehicleDetailPanelProps {
   tempLimit: number;
 }
 
-export default function VehicleDetailPanel({ 
-  vehicle, 
-  onClose, 
+export default function VehicleDetailPanel({
+  vehicle,
+  onClose,
   onFocusVehicle,
   onFollowVehicle,
   isFollowing,
-  speedLimit, 
-  tempLimit 
+  speedLimit,
+  tempLimit
 }: VehicleDetailPanelProps) {
   if (!vehicle) return null;
 
@@ -86,9 +86,9 @@ export default function VehicleDetailPanel({
         </div>
 
         {/* Hız ve Sıcaklık Grid */}
-        <div style={{ 
-          display: "grid", 
-          gridTemplateColumns: "1fr 1fr", 
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
           gap: "12px",
           marginBottom: "16px"
         }}>
@@ -100,8 +100,8 @@ export default function VehicleDetailPanel({
             border: `1px solid ${isSpeedAlert ? "#fecaca" : "#bbf7d0"}`
           }}>
             <label style={{ fontSize: "11px", color: "#666", display: "block" }}>Hız</label>
-            <span style={{ 
-              fontSize: "24px", 
+            <span style={{
+              fontSize: "24px",
               fontWeight: "bold",
               color: isSpeedAlert ? "#ef4444" : "#22c55e"
             }}>
@@ -119,8 +119,8 @@ export default function VehicleDetailPanel({
             border: `1px solid ${isTempAlert ? "#fecaca" : "#bbf7d0"}`
           }}>
             <label style={{ fontSize: "11px", color: "#666", display: "block" }}>Sıcaklık</label>
-            <span style={{ 
-              fontSize: "24px", 
+            <span style={{
+              fontSize: "24px",
               fontWeight: "bold",
               color: isTempAlert ? "#ef4444" : "#22c55e"
             }}>
@@ -132,9 +132,9 @@ export default function VehicleDetailPanel({
         </div>
 
         {/* Konum */}
-        <div style={{ 
-          padding: "12px", 
-          backgroundColor: "#f8fafc", 
+        <div style={{
+          padding: "12px",
+          backgroundColor: "#f8fafc",
           borderRadius: "8px",
           fontSize: "12px",
           color: "#666",
@@ -145,33 +145,33 @@ export default function VehicleDetailPanel({
         </div>
 
         {/* Geofence Durumu */}
-        <div style={{ 
-          padding: "12px", 
-          backgroundColor: vehicle.isOutOfBounds ? "#fef2f2" : "#f0fdf4", 
+        <div style={{
+          padding: "12px",
+          backgroundColor: vehicle.isOutOfBounds ? "#fef2f2" : "#f0fdf4",
           borderRadius: "8px",
           fontSize: "12px",
           border: `1px solid ${vehicle.isOutOfBounds ? "#fecaca" : "#bbf7d0"}`,
           marginBottom: "16px"
         }}>
           <label style={{ display: "block", marginBottom: "4px", color: "#666" }}>Bölge Durumu</label>
-          <div style={{ 
-            display: "flex", 
-            alignItems: "center", 
+          <div style={{
+            display: "flex",
+            alignItems: "center",
             gap: "6px",
             color: vehicle.isOutOfBounds ? "#ef4444" : "#22c55e",
             fontWeight: 500
           }}>
             {vehicle.isOutOfBounds ? (
-              <>⚠️ Bölge Dışında ({vehicle.geofence.radius}m sınır)</>
+              <>⚠️ Bölge Dışında ({vehicle.geofence?.radius || 0}m sınır)</>
             ) : (
-              <>✅ Bölge İçinde ({vehicle.geofence.radius}m sınır)</>
+              <>✅ Bölge İçinde ({vehicle.geofence?.radius || 0}m sınır)</>
             )}
           </div>
         </div>
 
         {/* Aksiyon Butonları */}
-        <div style={{ 
-          display: "flex", 
+        <div style={{
+          display: "flex",
           gap: "8px",
           flexDirection: "column"
         }}>

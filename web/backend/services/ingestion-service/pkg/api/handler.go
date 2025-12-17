@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/FarukKuz/CareerBridge/services/ingestion/pkg/dto"
-	"github.com/FarukKuz/CareerBridge/services/ingestion/pkg/producer"
+	"github.com/FarukKuz/CareerBridge/web/backend/services/ingestion-service/pkg/dto"
+	"github.com/FarukKuz/CareerBridge/web/backend/services/ingestion-service/pkg/producer"
 )
 
 type TelemetryHandler struct {
@@ -34,13 +34,14 @@ func (h *TelemetryHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 3. Basit Validasyon (Şartname 5.1.2 - Validation)
-	if packet.VehicleID == 0 {
+	// 3. Basit Validasyon (Şartname 5.1.2 - Validation)
+	if packet.VehicleID == "" {
 		http.Error(w, "Missing vehicle_id", http.StatusBadRequest)
 		return
 	}
 	// Zaman bilgisi yoksa sunucu zamanını ekle
-	if packet.Time.IsZero() {
-		packet.Time = time.Now()
+	if packet.Timestamp == "" {
+		packet.Timestamp = time.Now().Format(time.RFC3339)
 	}
 
 	// 4. Producer'a Gönder (Redis veya Disk)
